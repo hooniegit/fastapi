@@ -1,22 +1,30 @@
 import sqlite3
+import os
 
-conn = sqlite3.connect("user.db")
+# open conn
+conn = sqlite3.connect(os.path.dirname(os.path.abspath(__file__)) + "/user.db")
 cursor = conn.cursor()
 
-query_1 = """
+# define queries
+query_wal = "PRAGMA journal_mode=WAL;"
+query_create = """
 CREATE TABLE IF NOT EXISTS users (
     username VARCHAR(20),
     password VARCHAR(20)
-)
+);
 """
-
-query_2 = """
+query_insert = """
 INSERT INTO users 
 VALUES ('hooniegit', '12345678')
 """
 
-cursor.execute(query_1)
+# execute queries
+cursor.execute(query_wal)
 conn.commit()
-cursor.execute(query_2)
+cursor.execute(query_create)
 conn.commit()
+cursor.execute(query_insert)
+conn.commit()
+
+# close conn
 conn.close()
