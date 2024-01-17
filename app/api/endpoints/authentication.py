@@ -1,10 +1,4 @@
 from fastapi import APIRouter
-from fastapi.responses import PlainTextResponse
-from app.api.dependencies.authentication import get_current_user
-
-router = APIRouter()
-
-
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from datetime import datetime, timedelta
@@ -12,17 +6,23 @@ import sqlite3
 import jwt
 from typing import Optional
 
+# set router
+router = APIRouter()
 
+# token
 SECRET_KEY = "mysecretkey"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
+# open conn
 DATABASE_FILE = "/Users/kimdohoon/git/study/python-fastapi/app/api/sqlite/user.db"
 conn = sqlite3.connect(DATABASE_FILE)
 cursor = conn.cursor()
 
+# create scheme
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
+# create user
 class User:
     def __init__(self, username: str, email: str):
         self.username = username

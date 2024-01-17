@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.api.endpoints.authentication import router
+from app.api.endpoints.authentication_check import router
 
 app = FastAPI()
 app.include_router(router)
