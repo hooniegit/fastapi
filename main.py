@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.api.endpoints.authentication_endpoints import router
+from app.api.endpoints.authentication_endpoints_test import router
 
 app = FastAPI()
 app.include_router(router)

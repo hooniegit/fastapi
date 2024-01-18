@@ -1,6 +1,6 @@
 from fastapi import APIRouter # set router
 from fastapi import Depends # set dependency
-from fastapi import HTTPException, status # raise exception errors
+from fastapi import HTTPException # raise exception errors
 from fastapi.security import OAuth2PasswordBearer # create scheme
 
 import jwt # decode token with params
@@ -14,12 +14,8 @@ from typing import Optional # set optional variables
 class ClientCredentials(BaseModel):
     client_id: str
     client_secret: str
+    scope: str
     
-# user model
-class User:
-    def __init__(self, username: str):
-        self.username = username
-
 # set router
 router = APIRouter()
 
@@ -41,7 +37,7 @@ curl -X 'POST' \
   -H 'accept: application/json' \
   -d ''
 '''
-@router.post("/key")
+@router.get("/key")
 async def return_keys(username:str, password:str):
     conn = sqlite3.connect(DATABASE_FILE)
     cursor = conn.cursor()
@@ -83,7 +79,7 @@ curl -X 'POST' \
 }'
 '''
 @router.post("/token")
-async def login_for_access_token(form_data: ClientCredentials):
+async def return_access_token(form_data: ClientCredentials):
     # define user information
     conn = sqlite3.connect(DATABASE_FILE)
     cursor = conn.cursor()
@@ -96,7 +92,7 @@ async def login_for_access_token(form_data: ClientCredentials):
     if username:
         access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
         access_token = create_access_token(
-            data={"sub": username}, expires_delta=access_token_expires
+            data={"username": username, "scope": form_data.scope}, expires_delta=access_token_expires
         )
         return {"access_token": access_token, "token_type": "bearer"}
     
@@ -104,7 +100,7 @@ async def login_for_access_token(form_data: ClientCredentials):
     raise HTTPException(status_code=401, detail="Invalid credentials")
 
 # decode access token
-def decode_auth(token: str):
+def decode_access_token(token: str):
     try:
         # decode token with secret key and algorithm
         decoded_credentials = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -117,9 +113,9 @@ def decode_auth(token: str):
     except Exception as E:
         raise HTTPException(status_code=401, detail="Invalid authentication header")
 
-def decode_access_token(token: str = Depends(oauth2_scheme)):
+def confirm_access_token(token: str = Depends(oauth2_scheme)):
     # decode token & get infos
-    user_info = decode_auth(token)
+    user_info = decode_access_token(token)
     username, expire_date = user_info["username"], user_info["expire_date"]
 
     # read information
@@ -146,8 +142,12 @@ def decode_access_token(token: str = Depends(oauth2_scheme)):
 curl \
   --request GET \
   --url 'localhost:8000/users/me' \
-  --header 'Authorization: bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJob29uaWVnaXQiLCJleHAiOjE3MDU1MzMzMTR9.sO9CRQvWx7Pe7sm6inZVUCxWuKp_AtWD6rpcNvWwTwM'
+  --header 'Authorization: bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJob29uaWVnaXQiLCJleHAiOjE3MDU1OTMzMDN9.DQrIvkj5Nd2jMgupG2ArHvhf4_YrXICWxmD3nF_c9Ow'
 '''
+
+from app.api.dependencies.authentication import decode_access_token
+from app.api.models.authenticaton import User
+
 @router.get("/users/me")
 async def read_users_me(current_user: User = Depends(decode_access_token)):
     return current_user

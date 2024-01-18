@@ -1,60 +1,41 @@
-import sqlite3
-import os
 
-# open conn
-conn = sqlite3.connect(os.path.dirname(os.path.abspath(__file__)) + "/authentication.db")
-cursor = conn.cursor()
+def execute_query(dir: str, QUERY: str):
+    import sqlite3
 
-# define queries
-query_wal = "PRAGMA journal_mode=WAL;"
-query_create = """
-CREATE TABLE IF NOT EXISTS user (
-    username VARCHAR(20),
-    password VARCHAR(20),
-    client_id VARCHAR(20),
-    client_secret VARCHAR(40)
-);
-"""
+    # open conn
+    conn = sqlite3.connect(dir)
+    cursor = conn.cursor()
 
-# execute queries
-cursor.execute(query_wal)
-conn.commit()
-cursor.execute(query_create)
-conn.commit()
+    # execute queries
+    cursor.execute(QUERY)
+    conn.commit()
 
-# close conn
-conn.close()
+    # close conn
+    conn.close()
 
 
 if __name__ == "__main__":
-    # import secrets
+    import secrets, os
     
-    # conn = sqlite3.connect(os.path.dirname(os.path.abspath(__file__)) + "/authentication.db")
-    # cursor = conn.cursor()
+    dir = os.path.dirname(os.path.abspath(__file__)) + "/authentication.db"
+    
+    QUERY_WAL = "PRAGMA journal_mode=WAL;"
+    QUERY_CREATE = f"""CREATE TABLE IF NOT EXISTS user (
+        usermane VARCHAR(20),
+        password VARCHAR(20),
+        client_id VARCHAR(20),
+        client_secret VARCHAR(40)
+        )"""
 
-    # client_id = secrets.token_urlsafe(20)
-    # client_secret = secrets.token_urlsafe(40)
-    
-    # query_insert = f"""
-    # INSERT INTO user 
-    # VALUES ('hooniegit', '12345678', '{client_id}', '{client_secret}')
-    # """
-
-    # cursor.execute(query_insert)
-    # conn.commit()
-    # conn.close()
-    
-    conn = sqlite3.connect(os.path.dirname(os.path.abspath(__file__)) + "/authentication.db")
-    cursor = conn.cursor()
-    
-    query_insert = f"""
-    SELECT * FROM user
-    WHERE username = 'hooniegit'
+    client_id = secrets.token_urlsafe(20)
+    client_secret = secrets.token_urlsafe(40)
+    QUERY_INSERT = f"""
+    INSERT INTO user 
+    VALUES ('<username>', '<password>', '{client_id}', '{client_secret}')
     """
     
-    cursor.execute(query_insert)
-    returned = cursor.fetchone()
-    conn.close()
+    execute_query(dir=dir, QUERY=QUERY_WAL)
+    execute_query(dir=dir, QUERY=QUERY_CREATE)
+    execute_query(dir=dir, QUERY=QUERY_INSERT)
     
-    print(returned)
     
