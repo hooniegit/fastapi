@@ -68,24 +68,15 @@ def create_access_token(data: dict, expires_delta: Optional[int] = None):
     return encoded_jwt
 
 # create & return access token
-'''
-curl -X 'POST' \
-  'http://localhost:8000/token' \
-  -H 'accept: application/json' \
-  -H 'Content-Type: application/json' \
-  -d '{
-  "client_id": "<client_id>",
-  "client_secret": "<client_secret>"
-}'
-'''
 @router.post("/token")
-async def return_access_token(form_data: ClientCredentials):
+async def return_access_token(form_data: ClientCredentials = Depends(create_access_token)):
     # define user information
     conn = sqlite3.connect(DATABASE_FILE)
     cursor = conn.cursor()
     query = f"SELECT username FROM user WHERE client_id = ? AND client_secret = ?"
     cursor.execute(query, (form_data.client_id, form_data.client_secret))
-    username = cursor.fetchone()[0]
+    username = cursor.fetchone()
+    print(username)
     conn.close()
     
     # create access token
@@ -100,49 +91,13 @@ async def return_access_token(form_data: ClientCredentials):
     raise HTTPException(status_code=401, detail="Invalid credentials")
 
 # decode access token
-def decode_access_token(token: str):
-    try:
-        # decode token with secret key and algorithm
-        decoded_credentials = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username = decoded_credentials["sub"]
-        expire_date = decoded_credentials["exp"]
-        
-        return {"username": username, "expire_date": expire_date}
-    
-    # raise exception error
-    except Exception as E:
-        raise HTTPException(status_code=401, detail="Invalid authentication header")
-
-def confirm_access_token(token: str = Depends(oauth2_scheme)):
-    # decode token & get infos
-    user_info = decode_access_token(token)
-    username, expire_date = user_info["username"], user_info["expire_date"]
-
-    # read information
-    conn = sqlite3.connect(DATABASE_FILE)
-    cursor = conn.cursor()
-    query = "SELECT * FROM user WHERE username = ?"
-    cursor.execute(query, (username,))
-    user = cursor.fetchone()
-    conn.close()
-
-    # raise exception error (if credential invalid)
-    if not user:
-        raise HTTPException(status_code=401, detail="Invalid credentials")
-
-    # raise exception error (if expired)
-    expire_datetime = datetime.fromtimestamp(expire_date)
-    if expire_datetime <= datetime.now():
-        raise HTTPException(status_code=401, detail="Token expired")
-
-    return username
 
 # return user infos
 '''
 curl \
   --request GET \
   --url 'localhost:8000/users/me' \
-  --header 'Authorization: bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJob29uaWVnaXQiLCJleHAiOjE3MDU1OTMzMDN9.DQrIvkj5Nd2jMgupG2ArHvhf4_YrXICWxmD3nF_c9Ow'
+  --header 'Authorization: bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6WyJob29uaWVnaXQiXSwic2NvcGUiOiJERU1PIiwiZXhwIjoxNzA1NjI1NTcwfQ.RR4cEaQpKw09gZsXzcbQRgieEmSBDsWjPtbh0zG4ALA'
 '''
 
 from app.api.dependencies.authentication import decode_access_token

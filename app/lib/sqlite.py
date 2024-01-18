@@ -2,7 +2,7 @@ import sqlite3
 
 def execute_query(dir: str, QUERY: str):
     conn = sqlite3.connect(dir)
-    cursor = conn.cursor
+    cursor = conn.cursor()
     
     cursor.execute(QUERY)
     conn.commit()
@@ -10,7 +10,7 @@ def execute_query(dir: str, QUERY: str):
 
 def fetchall_query(dir: str, QUERY: str, values: tuple):
     conn = sqlite3.connect(dir)
-    cursor = conn.cursor
+    cursor = conn.cursor()
     
     cursor.execute(QUERY, values)
     returned = cursor.fetchall()
@@ -19,7 +19,7 @@ def fetchall_query(dir: str, QUERY: str, values: tuple):
     
 def fetchone_query(dir: str, QUERY: str, values: tuple):
     conn = sqlite3.connect(dir)
-    cursor = conn.cursor
+    cursor = conn.cursor()
     
     cursor.execute(QUERY, values)
     returned = cursor.fetchone()
