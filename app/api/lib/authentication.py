@@ -1,12 +1,12 @@
-import jwt
-from fastapi import HTTPException
-from typing import Optional # set optional variables
-from datetime import datetime, timedelta
+from typing import Optional
 
 def create_access_token(data: dict, expires_delta: Optional[int] = None):
+    from app.api.lib.etc import read_configs
+    from datetime import datetime, timedelta
+    import jwt
     
-    SECRET_KEY = "mysecretkey"
-    ALGORITHM = "HS256"
+    SECRET_KEY= read_configs("oauth", "SECRET_KEY")
+    ALGORITHM= read_configs("oauth", "ALGORITHM")
     
     # copy data
     to_encode = data.copy()
@@ -24,24 +24,24 @@ def create_access_token(data: dict, expires_delta: Optional[int] = None):
     
     return encoded_jwt
 
-# decode access token
-def decode_access_token(token: str):
+def decode_auth(token: str):
+    from app.api.lib.etc import read_configs
+    from fastapi import HTTPException
+    import jwt
     
-    SECRET_KEY = "mysecretkey"
-    ALGORITHM = "HS256"
+    SECRET_KEY= read_configs("oauth", "SECRET_KEY")
+    ALGORITHM= read_configs("oauth", "ALGORITHM")
     
     try:
         # decode token with secret key and algorithm
         decoded_credentials = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username = decoded_credentials["username"]
-        scope = decoded_credentials["scope"]
+        username = decoded_credentials["sub"]
         expire_date = decoded_credentials["exp"]
+        scope = decoded_credentials["scope"]
         
-        return {"username": username,
-                "scope": scope,
-                "expire_date": expire_date}
+        return {"username": username, "expire_date": expire_date, "scope": scope}
     
     # raise exception error
     except Exception as E:
         raise HTTPException(status_code=401, detail="Invalid authentication header")
-
+    
